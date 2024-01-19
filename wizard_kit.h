@@ -106,7 +106,7 @@ namespace dg::wizard::utility{
             *std::prev(dst) = accumulator(*std::prev(dst), *it);
         }
 
-        return std::prev(dst);
+        return dst;
     } 
 }
 
