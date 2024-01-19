@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <tuple>
 
-namespace dg::sort{
+namespace dg::wizard::sort{
 
     template <class CallBack, class First, class Second, class ...Args>
     static void insertion_sort(const CallBack& callback, First first, Second second, Args ...args){
@@ -59,7 +59,55 @@ namespace dg::sort{
         }(idx_seq);
 
     }
+}
 
+namespace dg::wizard::utility{
+
+    template <class T, size_t BIT_LENGTH>
+    auto fast_lower_bound(T key, T * data, const std::integral_constant<size_t, BIT_LENGTH>) -> size_t{
+
+        auto idx_seq    = std::make_index_sequence<BIT_LENGTH>{};
+        auto rs         = size_t{0u};
+
+        [&]<size_t ...IDX>(const std::index_sequence<IDX...>){
+            (
+                [&]{
+                    (void) IDX;
+                    constexpr auto BIT_IDX  = BIT_LENGTH - IDX - 1; 
+                    rs <<= 1;
+                    rs |= 1;
+                    rs ^= T{data[rs << BIT_IDX] > key}; 
+                }(), ...
+            );
+        }(idx_seq);
+
+        return rs;
+    }
+
+    template <class T, class Filter, std::enable_if_t<std::is_arithmetic_v<T>, bool> = true>
+    auto filter(T * first, T * last, T * dst, Filter filter) -> T *{
+
+        for (auto it = first; it != last; ++it){
+            (*dst) = *it;
+            dst += filter(*it);
+        }
+
+        return dst;
+    } 
+
+    template <class T, class Cond, class Accum>
+    auto sequential_group(T * first, T * last, T * dst, Cond cond, Accum accumulator) -> T *{
+
+        *(dst++) = first;
+
+        for (auto it = first + 1; it != last; ++it){
+            *dst = *it;
+            dst += cond(*dst, *std::prev(dst));
+            *std::prev(dst) = accumulator(*std::prev(dst), *it);
+        }
+
+        return std::prev(dst);
+    } 
 }
 
 #endif
